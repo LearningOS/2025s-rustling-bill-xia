@@ -2,7 +2,6 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -18,7 +17,7 @@ where
 
 impl<T> Heap<T>
 where
-    T: Default,
+    T: Default
 {
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
@@ -37,7 +36,18 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.count += 1;
+        self.items.push(value);
+        let mut idx = self.count;
+        while idx > 1 {
+            let pidx = self.parent_idx(idx);
+            if (self.comparator)(&self.items[pidx], &self.items[idx]) {
+                break;
+            } else {
+                self.items.swap(pidx, idx);
+                idx = pidx;
+            }
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,14 +67,19 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let lidx = self.left_child_idx(idx);
+        let ridx = lidx + 1;
+        if ridx > self.count || (self.comparator)(&self.items[lidx], &self.items[ridx]) {
+            lidx
+        } else {
+            ridx
+        }
     }
 }
 
 impl<T> Heap<T>
 where
-    T: Default + Ord,
+    T: Default + Ord + Copy,
 {
     /// Create a new MinHeap
     pub fn new_min() -> Self {
@@ -84,8 +99,26 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        let mut idx = 1;
+        if self.count == 0 {
+            return None;
+        }
+        self.items.swap(1, self.count);
+        if let Some(res) = self.items.pop() {
+            self.count -= 1;
+            while self.children_present(idx) {
+                let ch = self.smallest_child_idx(idx);
+                if (self.comparator)(&self.items[idx], &self.items[ch]) {
+                    break;
+                } else {
+                    self.items.swap(idx, ch);
+                    idx = ch;
+                }
+            }
+            Some(res)
+        } else {
+            None
+        }
     }
 }
 

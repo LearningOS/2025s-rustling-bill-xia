@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -23,19 +22,19 @@ impl<T> Node<T> {
     }
 }
 #[derive(Debug)]
-struct LinkedList<T> {
+struct LinkedList<T: Ord> {
     length: u32,
     start: Option<NonNull<Node<T>>>,
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: Ord> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: Ord> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -56,6 +55,16 @@ impl<T> LinkedList<T> {
         self.length += 1;
     }
 
+    pub fn add_by_ptr(&mut self, node_ptr: NonNull<Node<T>>) {
+        unsafe { (*node_ptr.as_ptr()).next = None };
+        match self.end {
+            None => self.start = Some(node_ptr),
+            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = Some(node_ptr) },
+        }
+        self.end = Some(node_ptr);
+        self.length += 1;
+    }
+
     pub fn get(&mut self, index: i32) -> Option<&T> {
         self.get_ith_node(self.start, index)
     }
@@ -71,16 +80,45 @@ impl<T> LinkedList<T> {
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        if list_a.length == 0 {
+            return list_b
+        } else if list_b.length == 0 {
+            return list_a
         }
+        let mut result = Self::default();
+        let mut a_curr = list_a.start;
+        let mut b_curr = list_b.start;
+        loop {
+            if let Some(ptr_a) = a_curr {
+                let node_a = unsafe { ptr_a.as_ref() };
+                if let Some(ptr_b) = b_curr {
+                    let node_b = unsafe { ptr_b.as_ref() };
+                    if node_a.val < node_b.val {
+                        a_curr = node_a.next;
+                        result.add_by_ptr(ptr_a);
+                    } else {
+                        b_curr = node_b.next;
+                        result.add_by_ptr(ptr_b);
+                    }
+                } else {
+                    a_curr = node_a.next;
+                    result.add_by_ptr(ptr_a);
+                }
+            } else {
+                if let Some(ptr_b) = b_curr {
+                    let node_b = unsafe { ptr_b.as_ref() };
+                    b_curr = node_b.next;
+                    result.add_by_ptr(ptr_b);
+                } else {
+                    break;
+                }
+            }
+        }
+        result
 	}
 }
 
-impl<T> Display for LinkedList<T>
+impl<T: Ord> Display for LinkedList<T>
 where
     T: Display,
 {
@@ -92,7 +130,7 @@ where
     }
 }
 
-impl<T> Display for Node<T>
+impl<T: Ord> Display for Node<T>
 where
     T: Display,
 {
